@@ -1169,8 +1169,7 @@ staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: nor
       const monthNames = { 7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា' };
       const mName = monthNames[selMonth] || 'សីហា';
       const content = buildWordStyleReportHtml(selMonth, repType, mName);
-      const cleaned = content.replace(/style="[^"]*"/g, '');
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>KSIT Report ${mName} 2026</title></head><body style="margin:0; background:#fff; font-family: 'Noto Sans Khmer', 'Khmer OS', 'Khmer OS Battambang', 'Arial', sans-serif;">${cleaned}</body></html>`;
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>KSIT Report ${mName} 2026</title></head><body style="margin:0; background:#fff; font-family: 'Noto Sans Khmer', 'Khmer OS', 'Khmer OS Battambang', 'Arial', sans-serif;">${content}</body></html>`;
       const blob = new Blob([html], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

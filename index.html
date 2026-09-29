@@ -533,6 +533,10 @@
             <button onclick="generateOfficialReport()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
               បង្កើតរបាយការណ៍ឥឡូវនេះ
             </button>
+            <button onclick="exportOfficialReportToWord()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-7-7h14"></path></svg>
+              <span>ទាញយក Word</span>
+            </button>
             <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
               <span>បោះពុម្ព / Print PDF</span>
@@ -899,133 +903,188 @@
     }
 
     // Official Report Generator (Like /ksit-monthly-attendance-report)
-    function generateOfficialReport() {
-      const selMonth = parseInt(document.getElementById('genMonthSelect').value);
-      const repType = document.getElementById('genReportType').value;
-      const monthNames = { 7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា' };
-      const mName = monthNames[selMonth] || 'សីហា';
+    function buildWordStyleReportHtml(selMonth, repType, mName) {
+      const summaryTitle = repType === 'table1' ? 'តារាង១. ស្ថិតិសារពីការអវត្តមាន និងច្បាប់ប្រចាំខែ' : 'តារាង២. សម្រង់ព័ត៌មានស្ដីពី ស្ថានភាពមន្ត្រីរាជការស៊ីវិល និងមន្ត្រីជាប់កិច្ចសន្យា';
 
-      let output = `
-        <div class="bg-white p-8 rounded-lg shadow-sm border border-slate-300 max-w-5xl mx-auto space-y-6 text-slate-900 font-khmer">
-          
-          <!-- Royal & Ministry Header -->
-          <div class="flex justify-between items-start border-b border-slate-200 pb-4 text-xs font-semibold">
-            <div class="text-center">
-              <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-              <div class="font-bold text-slate-900">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</div>
+      return `
+        <div style="max-width: 1100px; margin: 0 auto; background: #fff; color: #111827; font-family: 'Kantumruy Pro', 'Hanuman', 'Siemreap', sans-serif; padding: 28px 24px; border: 1px solid #d1d5db; box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #d1d5db; padding-bottom: 12px; margin-bottom: 18px; font-size: 12px; line-height: 1.5;">
+            <div style="text-align: center; width: 48%;">
+              <div style="font-weight: 700;">ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+              <div style="font-weight: 700; margin-top: 2px;">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</div>
             </div>
-            <div class="text-center">
-              <div class="font-bold">ព្រះរាជាណាចក្រកម្ពុជា</div>
+            <div style="text-align: center; width: 48%;">
+              <div style="font-weight: 700;">ព្រះរាជាណាចក្រកម្ពុជា</div>
               <div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
             </div>
           </div>
 
-          <!-- Report Title -->
-          <div class="text-center space-y-1">
-            <h2 class="text-base font-bold text-slate-900">តារាង២. សម្រង់ព័ត៌មានស្ដីពី ស្ថានភាពមន្រ្តីរាជការស៊ីវិល និងមន្រ្តីជាប់កិច្ចសន្យា</h2>
-            <p class="text-xs font-medium text-slate-600">ប្រចាំខែ${mName} ឆ្នាំ២០២៦ (រៀបចំតាមទម្រង់ Landscape ផ្លូវការ)</p>
+          <div style="text-align: center; margin-bottom: 12px;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 800;">${summaryTitle}</h2>
+            <p style="margin: 8px 0 0; font-size: 12px; font-weight: 600; color: #374151;">ប្រចាំខែ${mName} ឆ្នាំ២០២៦</p>
           </div>
 
-          <!-- Table 2 Landscape Sample Preview -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-[11px] border border-black text-center border-collapse">
+          <div style="overflow-x: auto; margin-top: 10px;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; border: 1px solid #111827; text-align: center;">
               <thead>
-                <tr class="bg-slate-100 font-bold">
-                  <th rowspan="2" class="border border-black p-1 w-8">ល.រ</th>
-                  <th rowspan="2" class="border border-black p-1 text-left w-48">អង្គភាព</th>
-                  <th colspan="2" class="border border-black p-1">មន្ត្រីរាជការស៊ីវិល</th>
-                  <th colspan="2" class="border border-black p-1">មន្ត្រីជាប់កិច្ចសន្យា</th>
-                  <th colspan="2" class="border border-black p-1">អវត្តមានប្រចាំខែ</th>
-                  <th colspan="2" class="border border-black p-1">ទំនេរគ្មានបៀវត្ស</th>
-                  <th colspan="2" class="border border-black p-1">ក្រៅក្របខណ្ឌដើម</th>
-                  <th rowspan="2" class="border border-black p-1 w-12">ផ្សេងៗ</th>
+                <tr style="background: #f3f4f6; font-weight: 700;">
+                  <th rowspan="2" style="border: 1px solid #111827; padding: 6px 4px; width: 6%;">ល.រ</th>
+                  <th rowspan="2" style="border: 1px solid #111827; padding: 6px 4px; text-align: left; width: 26%;">អង្គភាព</th>
+                  <th colspan="2" style="border: 1px solid #111827; padding: 6px 4px;">មន្ត្រីរាជការស៊ីវិល</th>
+                  <th colspan="2" style="border: 1px solid #111827; padding: 6px 4px;">មន្ត្រីជាប់កិច្ចសន្យា</th>
+                  <th colspan="2" style="border: 1px solid #111827; padding: 6px 4px;">អវត្តមានប្រចាំខែ</th>
+                  <th colspan="2" style="border: 1px solid #111827; padding: 6px 4px;">ទំនេរគ្មានបៀវត្ស</th>
+                  <th colspan="2" style="border: 1px solid #111827; padding: 6px 4px;">ក្រៅក្របខណ្ឌដើម</th>
+                  <th rowspan="2" style="border: 1px solid #111827; padding: 6px 4px; width: 10%;">ផ្សេងៗ</th>
                 </tr>
-                <tr class="bg-slate-50 font-semibold text-[10px]">
-                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
-                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
-                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">អត់ច្បាប់</th>
-                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
-                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
+                <tr style="background: #f9fafb; font-weight: 600;">
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">សរុប</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">ស្រី</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">សរុប</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">ស្រី</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">សរុប</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">អត់ច្បាប់</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">សរុប</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">ស្រី</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">សរុប</th>
+                  <th style="border: 1px solid #111827; padding: 5px 3px;">ស្រី</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="font-bold bg-slate-50/50">
-                  <td class="border border-black p-1">២.១</td><td class="border border-black p-1 text-left">គណៈគ្រប់គ្រងវិទ្យាស្ថាន</td>
-                  <td class="border border-black p-1">5</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td>
+                <tr>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; font-weight: 700;">2.1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; text-align: left; font-weight: 700;">គណៈគ្រប់គ្រងវិទ្យាស្ថាន</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">5</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">-</td>
                 </tr>
                 <tr>
-                  <td class="border border-black p-1">២.១.១</td><td class="border border-black p-1 text-left">នាយកវិទ្យាស្ថាន</td>
-                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; font-weight: 700;">2.1.1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; text-align: left;">នាយកវិទ្យាស្ថាន</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">-</td>
                 </tr>
                 <tr>
-                  <td class="border border-black p-1">២.១.២</td><td class="border border-black p-1 text-left">នាយករងវិទ្យាស្ថាន (រួមមាន លោក បួ ខែម)</td>
-                  <td class="border border-black p-1">4</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; font-weight: 700;">2.1.2</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; text-align: left;">នាយករងវិទ្យាស្ថាន (រួមមាន លោក បួ ខែម)</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">4</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">-</td>
                 </tr>
-                <tr class="font-bold bg-slate-50/50">
-                  <td class="border border-black p-1">៣.១</td><td class="border border-black p-1 text-left">ការិយាល័យរដ្ឋបាល និងបុគ្គលិក</td>
-                  <td class="border border-black p-1">2</td><td class="border border-black p-1">1</td>
-                  <td class="border border-black p-1">11</td><td class="border border-black p-1">3</td>
-                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td>
+                <tr style="background: #f9fafb; font-weight: 700;">
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">3.1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; text-align: left;">ការិយាល័យរដ្ឋបាល និងបុគ្គលិក</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">2</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">11</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">3</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">-</td>
                 </tr>
-                <tr class="font-bold bg-slate-100">
-                  <td class="border border-black p-1">សរុប</td><td class="border border-black p-1 text-left">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</td>
-                  <td class="border border-black p-1">51</td><td class="border border-black p-1">16</td>
-                  <td class="border border-black p-1">11</td><td class="border border-black p-1">3</td>
-                  <td class="border border-black p-1">2</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
-                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
-                  <td class="border border-black p-1"></td>
+                <tr style="background: #eef2ff; font-weight: 800;">
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">សរុប</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px; text-align: left;">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">51</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">16</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">11</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">3</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">2</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">1</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">0</td>
+                  <td style="border: 1px solid #111827; padding: 6px 4px;">-</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- Notes Block -->
-          <div class="text-[11px] text-slate-600 space-y-1">
-            <p><strong>សេចក្តីបញ្ជាក់៖</strong></p>
-            <p>- លេខរៀងចាប់ផ្តើមដោយលេខ២៖ សំដៅដល់កម្រិតនាយកដ្ឋាន / វិទ្យាស្ថាន។</p>
-            <p>- លេខរៀងចាប់ផ្តើមដោយលេខ៣៖ សំដៅដល់កម្រិតការិយាល័យ និងដេប៉ាតឺម៉ង់។</p>
-            <p>- ទំនេរគ្មានបៀវត្សសរុបត្រឹម ១ នាក់ (លោក ម៉ៅ សារ៉ារិទ្ធ) ដោយសារលោក ស៊ុំ ស៊ីណាត បានវិលត្រឡប់ចូលបម្រើការងារវិញ (សកម្ម)។</p>
+          <div style="margin-top: 18px; font-size: 11px; line-height: 1.7; color: #374151;">
+            <p style="margin: 0 0 8px; font-weight: 700;">សេចក្តីបញ្ជាក់៖</p>
+            <p style="margin: 0 0 6px;">- លេខរៀងចាប់ផ្តើមដោយលេខ ២៖ សំដៅដល់កម្រិតនាយកដ្ឋាន / វិទ្យាស្ថាន។</p>
+            <p style="margin: 0 0 6px;">- លេខរៀងចាប់ផ្តើមដោយលេខ ៣៖ សំដៅដល់កម្រិតការិយាល័យ និងដេប៉ាតឺម៉ង់។</p>
+            <p style="margin: 0;">- ទំនេរគ្មានបៀវត្សសរុបត្រឹម ១ នាក់ (លោក ម៉ៅ សារ៉ារិទ្ធ) ដោយសារលោក ស៊ុំ ស៊ីណាត បានវិលត្រឡប់ចូលបម្រើការងារវិញ (សកម្ម)។</p>
           </div>
-
-          <!-- Official Signatures -->
-          <div class="flex justify-between pt-6 text-xs text-center">
-            <div></div>
-            <div class="space-y-12">
-              <div>
-                <div>ខេត្តកំពង់ស្ពឺ ថ្ងៃទី១ ខែកញ្ញា ឆ្នាំ២០២៦</div>
-                <div class="font-bold mt-1">អ្នកធ្វើរបាយការណ៍</div>
-              </div>
-              <div>
-                <div class="font-bold">បានឃើញ និងឯកភាព</div>
-                <div class="font-bold">នាយកវិទ្យាស្ថាន</div>
-                <div class="font-bold mt-8">ជា យិននាង</div>
-              </div>
-            </div>
-          </div>
-
         </div>
       `;
+    }
+
+    function generateOfficialReport() {
+      const selMonth = parseInt(document.getElementById('genMonthSelect').value);
+      const repType = document.getElementById('genReportType').value;
+      const monthNames = { 7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា' };
+      const mName = monthNames[selMonth] || 'សីហា';
+      const output = buildWordStyleReportHtml(selMonth, repType, mName);
       document.getElementById('report-output-container').innerHTML = output;
     }
+
+    function exportOfficialReportToWord() {
+      const selMonth = parseInt(document.getElementById('genMonthSelect').value);
+      const repType = document.getElementById('genReportType').value;
+      const monthNames = { 7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា' };
+      const mName = monthNames[selMonth] || 'សីហា';
+      const content = buildWordStyleReportHtml(selMonth, repType, mName);
+      const cleaned = content.replace(/style="[^"]*"/g, '');
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>KSIT Report ${mName} 2026</title></head><body style="margin:0; background:#fff; font-family: 'Kantumruy Pro', 'Hanuman', 'Siemreap', sans-serif;">${cleaned}</body></html>`;
+      const blob = new Blob([html], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ksit-report-${mName}-2026.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Setup initial render
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAnnualChart();
+      loadMonthData(currentMonth);
+      renderMasterStaffTable();
+      generateOfficialReport();
+    });
 
     // Add / Edit Modal Controls
     function openAddLeaveModal() {
@@ -1099,12 +1158,6 @@
       loadMonthData(currentMonth);
     }
 
-    // Initial Execution
-    window.addEventListener('DOMContentLoaded', () => {
-      renderAnnualChart();
-      loadMonthData(currentMonth);
-      renderMasterStaffTable();
-    });
   </script>
 </body>
 </html>

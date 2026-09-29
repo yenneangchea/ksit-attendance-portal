@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KSIT Staff Attendance & Leave Dashboard - វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts for Khmer -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&family=Siemreap&family=Hanuman:wght@400;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            khmer: ['"Kantumruy Pro"', '"Siemreap"', 'sans-serif'],
+            moul: ['"Hanuman"', 'serif']
+          },
+          colors: {
+            ksit: {
+              50: '#f0f5ff',
+              100: '#e0ebff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Kantumruy Pro', 'Siemreap', sans-serif;
+    }
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+        font-size: 9pt !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 1cm;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-khmer">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand -->
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+            វ
+          </div>
+          <div>
+            <h1 class="text-sm sm:text-base font-bold tracking-wide">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ (KSIT)</h1>
+            <p class="text-xs text-blue-300">ប្រព័ន្ធគ្រប់គ្រងវត្តមាន និងរបាយការណ៍ស្វ័យប្រវត្តិ</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1">
+          <button onclick="switchTab('annual')" id="tab-btn-annual" class="px-3 py-2 rounded-md text-sm font-medium bg-blue-700 text-white transition-all">
+            📊 ទិន្នន័យប្រចាំឆ្នាំ (Annual)
+          </button>
+          <button onclick="switchTab('monthly')" id="tab-btn-monthly" class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+            📋 របាយការណ៍ប្រចាំខែ (Monthly)
+          </button>
+          <button onclick="switchTab('generator')" id="tab-btn-generator" class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+            ⚙️ បង្កើតរបាយការណ៍ (Generator)
+          </button>
+          <button onclick="switchTab('staff')" id="tab-btn-staff" class="px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all">
+            👥 បញ្ជីមន្ត្រី (Staff Registry)
+          </button>
+        </nav>
+
+        <!-- Right Quick Action -->
+        <div class="flex items-center space-x-2">
+          <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center space-x-1 shadow transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span>បោះពុម្ព (Print)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav Bar -->
+    <div class="md:hidden flex overflow-x-auto px-2 py-2 bg-slate-800 border-t border-slate-700 text-xs space-x-1">
+      <button onclick="switchTab('annual')" id="m-tab-annual" class="px-2.5 py-1.5 rounded bg-blue-600 text-white shrink-0">📊 ប្រចាំឆ្នាំ</button>
+      <button onclick="switchTab('monthly')" id="m-tab-monthly" class="px-2.5 py-1.5 rounded text-slate-300 shrink-0">📋 ប្រចាំខែ</button>
+      <button onclick="switchTab('generator')" id="m-tab-generator" class="px-2.5 py-1.5 rounded text-slate-300 shrink-0">⚙️ បង្កើតរបាយការណ៍</button>
+      <button onclick="switchTab('staff')" id="m-tab-staff" class="px-2.5 py-1.5 rounded text-slate-300 shrink-0">👥 បញ្ជីមន្ត្រី</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: ANNUAL LEAVE DASHBOARD (Image 1) -->
+    <!-- ========================================== -->
+    <div id="view-annual" class="space-y-6">
+      
+      <!-- Sub-header -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start space-x-3">
+          <div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          <div>
+            <div class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ | ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">របាយការណ៍វត្តមាន និងច្បាប់ប្រចាំឆ្នាំ (Annual Leave Dashboard)</h2>
+            <p class="text-xs text-slate-500 mt-1">ផ្ទាំងទិន្នន័យសរុបប្រចាំឆ្នាំ២០២៦ បង្ហាញពីនិន្នាការច្បាប់ឈប់សម្រាក និងស្ថិតិមន្ត្រី</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="switchTab('monthly')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>មើលរបាយការណ៍ប្រចាំខែ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Top KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-blue-400 transition">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>បុគ្គលិកសរុប (Total Staff)</span>
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+          </div>
+          <div class="text-3xl font-extrabold text-slate-900 mt-2">62 <span class="text-sm font-normal text-slate-500">នាក់</span></div>
+          <div class="flex items-center space-x-2 mt-3 text-xs">
+            <span class="bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">51 រាជការ</span>
+            <span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">11 កិច្ចសន្យា</span>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-amber-400 transition">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>ថ្ងៃច្បាប់សរុប (Total Leave Days)</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+          </div>
+          <div class="text-3xl font-extrabold text-slate-900 mt-2">132 <span class="text-sm font-normal text-slate-500">ថ្ងៃ</span></div>
+          <div class="flex items-center space-x-2 mt-3 text-xs text-slate-500">
+            <span>រាជការ: <strong class="text-slate-800">111 ថ្ងៃ</strong></span>
+            <span>•</span>
+            <span>កិច្ចសន្យា: <strong class="text-slate-800">21 ថ្ងៃ</strong></span>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-emerald-400 transition">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>មន្ត្រីសុំច្បាប់ (Staff On Leave)</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+          </div>
+          <div class="text-3xl font-extrabold text-slate-900 mt-2">36 <span class="text-sm font-normal text-slate-400">/ 62 នាក់</span></div>
+          <div class="w-full bg-slate-100 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-indigo-600 h-2 rounded-full" style="width: 58%;"></div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:border-rose-400 transition">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>ខែមានច្បាប់ច្រើន (Peak Month)</span>
+            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            </div>
+          </div>
+          <div class="text-3xl font-extrabold text-rose-600 mt-2">មីនា <span class="text-sm font-normal text-slate-500">26 ថ្ងៃ</span></div>
+          <div class="mt-3 text-xs text-slate-500">
+            <span>មធ្យមភាគ <strong>2.1 ថ្ងៃ/មន្ត្រី១នាក់</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+          <div>
+            <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              <span>ប្រៀបធៀបការសុំច្បាប់ប្រចាំខែ (Monthly Leave Trends 2026)</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">ចំនួនថ្ងៃច្បាប់សរុបបែងចែកតាមខែនីមួយៗ សម្រាប់មន្ត្រីរាជការ និងមន្ត្រីកិច្ចសន្យា</p>
+          </div>
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="inline-flex items-center"><span class="w-3 h-3 rounded bg-indigo-600 mr-1.5"></span>មន្ត្រីរាជការ</span>
+            <span class="inline-flex items-center"><span class="w-3 h-3 rounded bg-emerald-500 mr-1.5"></span>មន្ត្រីជាប់កិច្ចសន្យា</span>
+          </div>
+        </div>
+        <div class="mt-6 h-80">
+          <canvas id="leaveTrendsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 2: MONTHLY ATTENDANCE DASHBOARD (Images 2 & 3) -->
+    <!-- ========================================== -->
+    <div id="view-monthly" class="hidden space-y-6">
+
+      <!-- Month Selector Bar -->
+      <div class="bg-slate-900 text-white rounded-xl shadow-md p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          </div>
+          <div>
+            <div class="text-xs text-blue-400 font-semibold tracking-wider">MONTHLY ATTENDANCE REPORT DASHBOARD</div>
+            <h2 class="text-base sm:text-lg font-bold">ប្រព័ន្ធគ្រប់គ្រងវត្តមាន និងច្បាប់ឈប់សម្រាកបុគ្គលិក (KSIT Staff Dashboard)</h2>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Month Dropdown -->
+          <div class="flex items-center space-x-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm">
+            <span class="text-slate-400">ជ្រើសរើសខែ:</span>
+            <select id="monthSelect" onchange="loadMonthData(this.value)" class="bg-transparent text-white font-semibold outline-none cursor-pointer">
+              <option value="1" class="bg-slate-800">January (មករា)</option>
+              <option value="2" class="bg-slate-800">February (កុម្ភៈ)</option>
+              <option value="3" class="bg-slate-800">March (មីនា)</option>
+              <option value="4" class="bg-slate-800">April (មេសា)</option>
+              <option value="5" class="bg-slate-800">May (ឧសភា)</option>
+              <option value="6" class="bg-slate-800">June (មិថុនា)</option>
+              <option value="7" selected class="bg-slate-800">July (កក្កដា)</option>
+              <option value="8" class="bg-slate-800">August (សីហា)</option>
+              <option value="9" class="bg-slate-800">September (កញ្ញា)</option>
+              <option value="10" class="bg-slate-800">October (តុលា)</option>
+              <option value="11" class="bg-slate-800">November (វិច្ឆិកា)</option>
+              <option value="12" class="bg-slate-800">December (ធ្នូ)</option>
+            </select>
+          </div>
+
+          <button onclick="openAddLeaveModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>កត់ត្រាច្បាប់ថ្មី</span>
+          </button>
+
+          <button onclick="switchTab('generator')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>បង្កើតរបាយការណ៍ផ្លូវការ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: LEAVE STATISTICS SUMMARY (Sheet '04') -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">១</span>
+              <span>Section 1: Leave Statistics Summary (Sheet '04' - តារាងសង្ខេបស្ថិតិអ្នកសុំច្បាប់)</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">ស្ថិតិសរុបមន្ត្រីរាជការ និងមន្ត្រីកិច្ចសន្យា ប្រចាំខែដែលបានជ្រើសរើស</p>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-2">
+            <span>សរុបបុគ្គលិកសុំច្បាប់:</span>
+            <span id="metric-total-leave" class="text-sm text-blue-700">14 នាក់</span>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 overflow-x-auto">
+          <table class="w-full text-xs border border-slate-300 text-center border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-white font-bold">
+                <th rowspan="2" class="border border-slate-700 px-2 py-2 w-10">ល.រ</th>
+                <th rowspan="2" class="border border-slate-700 px-4 py-2 text-left">ឈ្មោះអង្គភាព</th>
+                <th colspan="2" class="border border-slate-700 px-2 py-1 bg-indigo-900">មន្ត្រីរាជការស៊ីវិល សរុប</th>
+                <th colspan="4" class="border border-slate-700 px-2 py-1 bg-indigo-950">អវត្តមានមន្ត្រីរាជការ</th>
+                <th colspan="2" class="border border-slate-700 px-2 py-1 bg-emerald-900">មន្ត្រីជាប់កិច្ចសន្យា សរុប</th>
+                <th colspan="4" class="border border-slate-700 px-2 py-1 bg-emerald-950">អវត្តមានមន្ត្រីកិច្ចសន្យា</th>
+                <th rowspan="2" class="border border-slate-700 px-2 py-2">ផ្សេងៗ</th>
+              </tr>
+              <tr class="bg-slate-800 text-slate-200 font-semibold text-[11px]">
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-800/80">សរុប</th>
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-800/80">ស្រី</th>
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-900/80">ច្បាប់ (សរុប)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-900/80">ច្បាប់ (ស្រី)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-900/80">អត់ច្បាប់ (សរុប)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-indigo-900/80">អត់ច្បាប់ (ស្រី)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-800/80">សរុប</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-800/80">ស្រី</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-900/80">ច្បាប់ (សរុប)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-900/80">ច្បាប់ (ស្រី)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-900/80">អត់ច្បាប់ (សរុប)</th>
+                <th class="border border-slate-700 px-2 py-1 bg-emerald-900/80">អត់ច្បាប់ (ស្រី)</th>
+              </tr>
+            </thead>
+            <tbody id="summary-table-body">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+
+          <div class="mt-4 flex flex-col sm:flex-row justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
+            <div>
+              <span id="summary-reporter">អ្នកធ្វើតារាង: <strong>ជា យិននាង</strong></span>
+            </div>
+            <div>
+              <span id="summary-date">ខេត្តកំពង់ស្ពឺ ថ្ងៃទី១ ខែសីហា ឆ្នាំ២០២៦ | បានឃើញ និងឯកភាព: <strong>នាយកវិទ្យាស្ថាន</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- SECTION 2: DETAILED LEAVE RECORDS (Sheet 'Detail (10)') -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+              <span class="w-6 h-6 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">២</span>
+              <span>Section 2: Detailed Leave Records (Sheet 'Detail (10)' - តារាងលម្អិតអវត្តមាន)</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">បញ្ជីឈ្មោះមន្ត្រីរាជការ និងបុគ្គលិកដែលមានច្បាប់ឈប់សម្រាក ជាមួយនឹងមុខតំណែងផ្លូវការ (Column K)</p>
+          </div>
+          <div class="flex items-center space-x-2 text-xs">
+            <span class="px-2.5 py-1 bg-slate-200 rounded font-medium text-slate-700" id="badge-active-period">Active Period: July 2026</span>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 space-y-6">
+          
+          <!-- PART A: CIVIL SERVANTS -->
+          <div>
+            <div class="bg-slate-900 text-white px-4 py-2 rounded-t-lg font-bold text-xs flex justify-between items-center">
+              <span>PART A: CIVIL SERVANTS (មន្ត្រីរាជការស៊ីវិល)</span>
+              <span id="badge-count-civil" class="bg-blue-600 px-2 py-0.5 rounded text-[11px]">11 នាក់</span>
+            </div>
+            <div class="border-x border-b border-slate-200 rounded-b-lg overflow-x-auto">
+              <table class="w-full text-xs text-left border-collapse">
+                <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 font-semibold text-[11px]">
+                  <tr>
+                    <th class="py-2.5 px-3 w-10 text-center">ល.រ</th>
+                    <th class="py-2.5 px-3">គោត្តនាម-នាម</th>
+                    <th class="py-2.5 px-3 w-28">ភេទ</th>
+                    <th class="py-2.5 px-3">មុខតំណែងផ្លូវការ (Official Position)</th>
+                    <th class="py-2.5 px-3 text-center">អវត្តមានមានច្បាប់</th>
+                    <th class="py-2.5 px-3 text-center">អត់ច្បាប់</th>
+                    <th class="py-2.5 px-3 text-center">មកយឺត/ចេញមុន</th>
+                    <th class="py-2.5 px-3 text-center">ស្ថានភាព</th>
+                    <th class="py-2.5 px-3 text-center no-print w-20">សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="civil-leave-body" class="divide-y divide-slate-100 text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- PART B: CONTRACT STAFF -->
+          <div>
+            <div class="bg-emerald-900 text-white px-4 py-2 rounded-t-lg font-bold text-xs flex justify-between items-center">
+              <span>PART B: CONTRACT STAFF (ផ្នែកមន្ត្រីជាប់កិច្ចសន្យា)</span>
+              <span id="badge-count-contract" class="bg-emerald-600 px-2 py-0.5 rounded text-[11px]">3 នាក់</span>
+            </div>
+            <div class="border-x border-b border-slate-200 rounded-b-lg overflow-x-auto">
+              <table class="w-full text-xs text-left border-collapse">
+                <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 font-semibold text-[11px]">
+                  <tr>
+                    <th class="py-2.5 px-3 w-10 text-center">ល.រ</th>
+                    <th class="py-2.5 px-3">គោត្តនាម-នាម</th>
+                    <th class="py-2.5 px-3 w-28">ភេទ</th>
+                    <th class="py-2.5 px-3">មុខតំណែងផ្លូវការ (Official Position)</th>
+                    <th class="py-2.5 px-3 text-center">អវត្តមានមានច្បាប់</th>
+                    <th class="py-2.5 px-3 text-center">អត់ច្បាប់</th>
+                    <th class="py-2.5 px-3 text-center">មកយឺត/ចេញមុន</th>
+                    <th class="py-2.5 px-3 text-center">ស្ថានភាព</th>
+                    <th class="py-2.5 px-3 text-center no-print w-20">សកម្មភាព</th>
+                  </tr>
+                </thead>
+                <tbody id="contract-leave-body" class="divide-y divide-slate-100 text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Disciplinary Notice & Signatures -->
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg text-xs space-y-2 text-slate-600">
+            <p><strong>សម្គាល់៖</strong> ទណ្ឌកម្មវិន័យអនុវត្តចំពោះអវត្តមានគ្មានច្បាប់អនុញ្ញាត និងការមកយឺត-ចេញមុនកំណត់ ស្របតាមបទបញ្ជាផ្ទៃក្នុងរបស់វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ។</p>
+            <div class="flex justify-between pt-3 border-t border-slate-200">
+              <span>បានពិនិត្យ និងបញ្ជាក់ថាត្រឹមត្រូវ</span>
+              <span id="detail-sign-block">ខេត្តកំពង់ស្ពឺ ថ្ងៃទី១ ខែសីហា ឆ្នាំ២០២៦ | <strong>នាយកវិទ្យាស្ថាន</strong></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 3: REPORT GENERATOR (Like /ksit-monthly-attendance-report) -->
+    <!-- ========================================== -->
+    <div id="view-generator" class="hidden space-y-6">
+      
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+              <span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold">⚙️</span>
+              <span>ម៉ាស៊ីនបង្កើតរបាយការណ៍ផ្លូវការ (KSIT Report Generator)</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">បង្កើតតារាងទី១ (Checklist) និងតារាងទី២ (Landscape Matrix 12 ជួរឈរ) តាមស្តង់ដារក្រសួងអប់រំ យុវជន និងកីឡា</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="genMonthSelect" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white">
+              <option value="7">ខែកក្កដា ឆ្នាំ២០២៦</option>
+              <option value="8" selected>ខែសីហា ឆ្នាំ២០២៦</option>
+              <option value="9">ខែកញ្ញា ឆ្នាំ២០២៦</option>
+            </select>
+            <select id="genReportType" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-semibold bg-white">
+              <option value="table2">តារាង២ (សម្រង់ព័ត៌មានស្ថានភាពមន្ត្រី - Landscape)</option>
+              <option value="table1">តារាង១ (ប្រព័ន្ធគ្រប់គ្រងវត្តមាន - Checklist)</option>
+              <option value="all">តារាង១ និង តារាង២ រួមគ្នា</option>
+            </select>
+            <button onclick="generateOfficialReport()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
+              បង្កើតរបាយការណ៍ឥឡូវនេះ
+            </button>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              <span>បោះពុម្ព / Print PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rendered Report Output Container -->
+        <div id="report-output-container" class="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-6 overflow-x-auto min-h-[400px]">
+          <!-- Report HTML rendered here -->
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TAB 4: STAFF MASTER REGISTRY (All 62 Staff) -->
+    <!-- ========================================== -->
+    <div id="view-staff" class="hidden space-y-6">
+      
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+              <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-bold">👥</span>
+              <span>បញ្ជីឈ្មោះមន្ត្រីរាជការ និងបុគ្គលិកផ្លូវការ (Staff Master Registry - 62 នាក់)</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">ផ្ទៀងផ្ទាត់មុខតំណែងពិតប្រាកដតាម Column K ធានាថាលោកគ្រូ-អ្នកគ្រូទាំង ៣០ រូប មិនច្រឡំជា Officer (មន្ត្រី)</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="staffSearchInput" onkeyup="filterStaffTable()" placeholder="ស្វែងរកតាមឈ្មោះ ឬអត្តលេខ..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-blue-500 w-56">
+            <select id="staffRoleFilter" onchange="filterStaffTable()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs bg-white">
+              <option value="all">គ្រប់មុខតំណែងទាំងអស់</option>
+              <option value="គ្រូបង្រៀន">គ្រូបង្រៀន (Teachers - 30 នាក់)</option>
+              <option value="នាយករង">នាយករងវិទ្យាស្ថាន (Deputy Directors)</option>
+              <option value="អនុប្រ">អនុប្រធានការិយាល័យ/ដេប៉ាតឺម៉ង់</option>
+              <option value="ប្រ.">ប្រធានដេប៉ាតឺម៉ង់</option>
+              <option value="មន្ត្រី">មន្ត្រី (Officers - 6 នាក់)</option>
+              <option value="កិច្ចសន្យា">មន្ត្រីជាប់កិច្ចសន្យា (11 នាក់)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 text-[11px]">
+              <tr>
+                <th class="py-2.5 px-3 w-12 text-center">ល.រ</th>
+                <th class="py-2.5 px-3">អត្តលេខ</th>
+                <th class="py-2.5 px-3">គោត្តនាម-នាម</th>
+                <th class="py-2.5 px-3">អក្សរឡាតាំង</th>
+                <th class="py-2.5 px-3 text-center">ភេទ</th>
+                <th class="py-2.5 px-3">ក្របខ័ណ្ឌ/ថ្នាក់</th>
+                <th class="py-2.5 px-3">ប្រភេទមន្ត្រី (Col J)</th>
+                <th class="py-2.5 px-3 font-bold text-indigo-900 bg-indigo-50">មុខតំណែងពិត (Col K)</th>
+                <th class="py-2.5 px-3">លេខទូរស័ព្ទ</th>
+              </tr>
+            </thead>
+            <tbody id="masterStaffTableBody" class="divide-y divide-slate-100 text-slate-800">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal for Adding / Editing Leave -->
+  <div id="leaveModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden no-print">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="modalTitle" class="font-bold text-slate-900 text-base">កត់ត្រាច្បាប់ឈប់សម្រាក</h3>
+        <button onclick="closeLeaveModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ជ្រើសរើសបុគ្គលិក:</label>
+          <select id="modalStaffSelect" onchange="onModalStaffChange()" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">មុខតំណែងផ្លូវការ (Auto-filled from Column K):</label>
+          <input type="text" id="modalStaffPosition" readonly class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-slate-600 font-semibold">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ចំនួនថ្ងៃច្បាប់ (Leave Days):</label>
+          <input type="number" id="modalLeaveDays" min="1" max="31" value="1" class="w-full border border-slate-300 rounded-lg p-2">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">ប្រភេទច្បាប់ (Leave Type):</label>
+          <select id="modalLeaveType" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+            <option value="សម្រាករយៈពេលខ្លី">សម្រាករយៈពេលខ្លី (Approved)</option>
+            <option value="សម្រាកព្យាបាលជំងឺ">សម្រាកព្យាបាលជំងឺ (Medical)</option>
+            <option value="ការងារផ្ទាល់ខ្លួន">ការងារផ្ទាល់ខ្លួន (Personal)</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button onclick="closeLeaveModal()" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100">បោះបង់</button>
+        <button onclick="saveModalLeave()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 shadow">រក្សាទុក</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print mt-auto">
+    <p>វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ (KSIT) • Kampong Speu Institute of Technology</p>
+    <p class="mt-1 text-[11px] text-slate-400">ប្រព័ន្ធគ្រប់គ្រងវត្តមានស្វ័យប្រវត្តិតាមស្តង់ដារក្រសួងអប់រំ យុវជន និងកីឡា | រៀបចំដោយ Chea Yenneang</p>
+  </footer>
+
+  <!-- Core JavaScript Logic -->
+  <script>
+    // Embedded Data
+    const rawData = {"staff": [{"no": 1, "id": "1850600045", "name": "ហ៊ាត់ ប៊ុនហេ", "latin": "HARTH BUNHE", "gender": "ប្រុស", "dob": "1985-01-01", "idCard": "150843061.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "នាយកវិទ្យាស្ថាន", "phone": "0165461156"}, {"no": 2, "id": "1930500090", "name": "ផា រដ្ឋា", "latin": "PHA RATHA", "gender": "ប្រុស", "dob": "15-08-1993", "idCard": "030572268(01)", "rank": "ក.2.3", "empType": "មន្ត្រីរាជការ", "position": "នាយករងវិទ្យាស្ថាន", "phone": "0165461157"}, {"no": 3, "id": "1890800084", "name": "តាំង លាក់ឃាំង", "latin": "TAING LEAKKHAING", "gender": "ប្រុស", "dob": "25-07-1989", "idCard": "20961899.0", "rank": "ក.2.2", "empType": "មន្ត្រីរាជការ", "position": "នាយករងវិទ្យាស្ថាន", "phone": "0165461158"}, {"no": 4, "id": "1880600028", "name": "ហុង ចាន់លី", "latin": "HONG CHANNLY", "gender": "ប្រុស", "dob": "1988-10-10", "idCard": "150843033.0", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "នាយករងវិទ្យាស្ថាន", "phone": "0165461159"}, {"no": 5, "id": "1850600163", "name": "បួ ខែម", "latin": "BOUR KHEM", "gender": "ប្រុស", "dob": "1985-11-03", "idCard": "150805994.0", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "នាយករងវិទ្យាស្ថាន", "phone": "0165461160"}, {"no": 6, "id": "2930600144", "name": "បួ សុកខន", "latin": "BOUR SOKKHORN", "gender": "ស្រី", "dob": "1993-09-07", "idCard": "150852269.0", "rank": "ខ.2.4", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ការិយាល័យ", "phone": "0165461160"}, {"no": 7, "id": "1941200322", "name": "ជា យិននាង", "latin": "CHEA YENNEANG", "gender": "ប្រុស", "dob": "1994-12-10", "idCard": "011033956(01)", "rank": "ក.3.4", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 8, "id": "1820300505", "name": "សាន់ សាវុឌ្ឍ", "latin": "SANN SAVUTH", "gender": "ប្រុស", "dob": "15-01-1982", "idCard": "061968611(01)", "rank": "ក.2.3", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ការិយាល័យ", "phone": "0165461160"}, {"no": 9, "id": "2920900046", "name": "ជ លីនដា", "latin": "CHOR LINDA", "gender": "ស្រី", "dob": "1992-02-04", "idCard": "140069625 (02)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 10, "id": "1920600165", "name": "ប៉ូ សុវណ្ណនេត្រា", "latin": "PO SUVANNETRA", "gender": "ប្រុស", "dob": "16-06-1992", "idCard": "150845101.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ការិយាល័យ", "phone": "0165461160"}, {"no": 11, "id": "2940600161", "name": "ថៃ ឡៃសៀង", "latin": "THAY LAYSEANG", "gender": "ស្រី", "dob": "1994-07-10", "idCard": "150877112.0", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 12, "id": "1890500177", "name": "កែវ ពុទ្ធរិន", "latin": "KEO PUTRIN", "gender": "ប្រុស", "dob": "1989-09-02", "idCard": "030484531(01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 13, "id": "1930900053", "name": "ហេង ហួតចេង", "latin": "HENG HOURTHCHENG", "gender": "ប្រុស", "dob": "1993-03-03", "idCard": "140176076.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ការិយាល័យ", "phone": "0165461160"}, {"no": 14, "id": "1870600202", "name": "យឹង តុងគាន", "latin": "YING TONGKEAN", "gender": "ប្រុស", "dob": "15-09-1987", "idCard": "150924953.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 15, "id": "2830700182", "name": "ឈួន សំរិត", "latin": "CHHOUN SAMRITH", "gender": "ស្រី", "dob": "1983-02-04", "idCard": "110540958(01)", "rank": "ក.2.2", "empType": "មន្ត្រីរាជការ", "position": "មន្ត្រី", "phone": "0165461160"}, {"no": 16, "id": "2981700129", "name": "ប៉ូច ជាតា", "latin": "POCH CHEATA", "gender": "ស្រី", "dob": "1998-07-12", "idCard": "180745119.0", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 17, "id": "2921000154", "name": "ហ៊ត ស្រីវង", "latin": "HORT SREYVORNG", "gender": "ស្រី", "dob": "16-08-1992", "idCard": "070197204 (01)", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 18, "id": "1890600234", "name": "វ័ន យួង", "latin": "VORN YUONG", "gender": "ប្រុស", "dob": "20-12-1989", "idCard": "150903529.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 19, "id": "1900600201", "name": "សួ វណ្ណៈ", "latin": "SOUR VANNAK", "gender": "ប្រុស", "dob": "18-01-1990", "idCard": "150583283.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 20, "id": "2920800388", "name": "អាត សុភ័ណ្ឌ", "latin": "ART SOPHORN", "gender": "ស្រី", "dob": "1992-02-11", "idCard": "21159692.0", "rank": "ក.3.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 21, "id": "2890600118", "name": "ស្រៀន ឡៃគីម", "latin": "SREAN LAYKIM", "gender": "ស្រី", "dob": "1989-02-09", "idCard": "150547939(01)", "rank": "ក.2.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 22, "id": "1930500089", "name": "នួន ឌីណា", "latin": "NUON DINA", "gender": "ប្រុស", "dob": "1993-05-10", "idCard": "030617376(01)", "rank": "ក.2.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 23, "id": "1901700107", "name": "ស៊ុំ ស៊ីណាត", "latin": "SUM SINAT", "gender": "ប្រុស", "dob": "17-08-1990", "idCard": "180437386 (01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "ប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 24, "id": "1870600231", "name": "អ៊ុក ប៊ុនហ័រ", "latin": "UK BUNHOA", "gender": "ប្រុស", "dob": "16-06-1987", "idCard": "150898035.0", "rank": "ខ.2.3", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 25, "id": "2920600249", "name": "អ៊ុន សាឃន", "latin": "UN SAKHORN", "gender": "ស្រី", "dob": "1992-03-03", "idCard": "150938519.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 26, "id": "1882100696", "name": "ប្រង់ ភាក់", "latin": "PRANG PHEAK", "gender": "ប្រុស", "dob": "1988-11-10", "idCard": "101269512.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 27, "id": "1901700216", "name": "គង់ ចំរើន", "latin": "KONG CHAMROEUN", "gender": "ប្រុស", "dob": "1990-01-04", "idCard": "180933567.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 28, "id": "1940600097", "name": "អ៊ា ចិត្រា", "latin": "EAR CHITRA", "gender": "ប្រុស", "dob": "1994-09-03", "idCard": "150926163.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 29, "id": "2930800356", "name": "សំបូរ ចន្នី", "latin": "SAMBO CHANNY", "gender": "ស្រី", "dob": "1993-04-09", "idCard": "020893300 (01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 30, "id": "1920600072", "name": "ឈន ផល្លី", "latin": "CHHON PHALLY", "gender": "ប្រុស", "dob": "1992-01-07", "idCard": "150475597 (01)", "rank": "ខ.2.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 31, "id": "1980500069", "name": "រិន រ៉ី", "latin": "REN REY", "gender": "ប្រុស", "dob": "1998-03-01", "idCard": "30817730.0", "rank": "ក.3.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 32, "id": "1920600124", "name": "តុង វុទ្ធា", "latin": "TONG VUTHEA", "gender": "ប្រុស", "dob": "1992-03-10", "idCard": "150636157(01)", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "ប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 33, "id": "2940600185", "name": "កន យុគី", "latin": "KORN YUKY", "gender": "ស្រី", "dob": "1994-01-01", "idCard": "150869004.0", "rank": "ក.3.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 34, "id": "1932100212", "name": "ណា ស្ទែនដា", "latin": "NA STANDA", "gender": "ប្រុស", "dob": "1993-09-07", "idCard": "101371938.0", "rank": "ក.2.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 35, "id": "1882400010", "name": "លាង លីណា", "latin": "LEANG LENA", "gender": "ប្រុស", "dob": "1988-10-04", "idCard": "210067761(01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 36, "id": "1911700157", "name": "ម៉ៅ សារ៉ារិទ្ធ", "latin": "MAO SARARITH", "gender": "ប្រុស", "dob": "1991-12-03", "idCard": "010666840(01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 37, "id": "1000500052", "name": "ធី ពុធនីម", "latin": "THY PUTHNIM", "gender": "ប្រុស", "dob": "15-02-2000", "idCard": "30788181.0", "rank": "ក.3.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 38, "id": "2920900047", "name": "អុល យ៉េន", "latin": "OUL YEIN", "gender": "ស្រី", "dob": "1992-10-01", "idCard": "140153789.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 39, "id": "1912100418", "name": "ម៉ម សំឡី", "latin": "MAM SAMLEY", "gender": "ប្រុស", "dob": "16-06-1991", "idCard": "150475597(01)", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 40, "id": "1941400084", "name": "ឆេង សុច័ន្ទណែត", "latin": "CHHENG SOCHANNET", "gender": "ប្រុស", "dob": "23-02-1994", "idCard": "11232404.0", "rank": "ក.2.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 41, "id": "1920200139", "name": "ផាវ ចន្នី", "latin": "PHAO CHANNY", "gender": "ប្រុស", "dob": "1993-09-07", "idCard": "170644910 (01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 42, "id": "2930600174", "name": "គ្រួច សុធា", "latin": "KRUOCH SOTHEA", "gender": "ស្រី", "dob": "1993-03-07", "idCard": "150938518.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 43, "id": "2922108197", "name": "អ៊ាវ ចិន្តា", "latin": "EAV CHENDA", "gender": "ស្រី", "dob": "25-05-1992", "idCard": "101116789(01)", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 44, "id": "2940400161", "name": "សេក លីនី", "latin": "SEK LINY", "gender": "ស្រី", "dob": "1994-09-06", "idCard": "040331327(01)", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 45, "id": "1910600161", "name": "ម៉ុន ឆេងមាន", "latin": "MON CHHENGMEAN", "gender": "ប្រុស", "dob": "20-05-1991", "idCard": "150778325.0", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "ប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 46, "id": "2914800006", "name": "ស៊ុន ណៃស៊ាង", "latin": "SUN NAYSEANG", "gender": "ស្រី", "dob": "23-07-1991", "idCard": "061171142(01)", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "phone": "0165461160"}, {"no": 47, "id": "1970600056", "name": "លឹម សុខាណា", "latin": "LIM SOKHANA", "gender": "ប្រុស", "dob": "20-04-1997", "idCard": "150542380(01)", "rank": "ក.3.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 48, "id": "1960600073", "name": "ជឹង ប៉ជាំង", "latin": "CHOENG PORCHAING", "gender": "ប្រុស", "dob": "1996-08-06", "idCard": "150519705(01)", "rank": "ក.3.1", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 49, "id": "1970100034", "name": "ឃ តាំងហៀប", "latin": "KHOR TANG HIEB", "gender": "ប្រុស", "dob": "28-09-1997", "idCard": "160310185.0", "rank": "ក.3.2", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 50, "id": "1920600205", "name": "វ៉ាន់ មករា", "latin": "VANN MAKARA", "gender": "ប្រុស", "dob": "1992-07-01", "idCard": "150896118.0", "rank": "ក.3.3", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 51, "id": "1930600178", "name": "ខេង ពីន", "latin": "KHENG PIN", "gender": "ប្រុស", "dob": "29-04-1993", "idCard": "150490852(01)", "rank": "ក.3.4", "empType": "មន្ត្រីរាជការ", "position": "គ្រូបង្រៀន", "phone": "0165461160"}, {"no": 52, "id": "KSIT-052", "name": "សំ​ អានរ៉ា", "latin": "SAM ANRA", "gender": "ប្រុស", "dob": "1986-10-06", "idCard": "030490420 (01)", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​បើកបរ​", "phone": "0165461160"}, {"no": 53, "id": "KSIT-053", "name": "រ៉េន ស្រីម៉ី", "latin": "REN SREYMEY", "gender": "ស្រី", "dob": "28-12-2001", "idCard": "31007972.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​ធ្វើអនាម័យ​", "phone": "0165461160"}, {"no": 54, "id": "KSIT-054", "name": "សុក​ សៅវី​", "latin": "SOK SAOVY", "gender": "ស្រី", "dob": "15-12-1990", "idCard": "30882643.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​ធ្វើអនាម័យ​", "phone": "0165461160"}, {"no": 55, "id": "KSIT-055", "name": "ហៃ វឿន", "latin": "HAI VOEUN", "gender": "ប្រុស", "dob": "1985-12-01", "idCard": "40493438.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​ធ្វើអនាម័យ​", "phone": "0165461160"}, {"no": 56, "id": "KSIT-056", "name": "សុន រទ្ធី", "latin": "SON RITHY", "gender": "ប្រុស", "dob": "2000-02-04", "idCard": "150843052.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​រក្សាសន្តិសុខ​", "phone": "0165461160"}, {"no": 57, "id": "KSIT-057", "name": "តូច​ ផា", "latin": "TOCH PHA", "gender": "ប្រុស", "dob": "1969-12-05", "idCard": "030267187 (02)", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​រក្សាសន្តិសុខ​", "phone": "0165461160"}, {"no": 58, "id": "KSIT-058", "name": "ឡុង នឿន", "latin": "LONG NEOURN", "gender": "ប្រុស", "dob": "1979-05-10", "idCard": "31016024.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នករក្សាសន្តិសុខ", "phone": "0165461160"}, {"no": 59, "id": "KSIT-059", "name": "វង នឿន", "latin": "VORNG NOEURN", "gender": "ប្រុស", "dob": "1960-05-08", "idCard": "030504688(01)", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នក​រក្សាសន្តិសុខ​", "phone": "0165461160"}, {"no": 60, "id": "KSIT-060", "name": "សុខ ស្រីលីន", "latin": "SOKH SREYLIN", "gender": "ស្រី", "dob": "1998-07-04", "idCard": "030619544 (01)", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នកថែសួន​", "phone": "0165461160"}, {"no": 61, "id": "KSIT-061", "name": "ឈុន លី", "latin": "CHHUN LY", "gender": "ប្រុស", "dob": "1967-07-07", "idCard": "30916982.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នកថែសួន​", "phone": "0165461160"}, {"no": 62, "id": "KSIT-062", "name": "ឡេង លឿន", "latin": "Leng Loeun", "gender": "ប្រុស", "dob": "25-05-1979", "idCard": "30900880.0", "rank": "", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "position": "អ្នកថែសួន​", "phone": "0165461160"}], "monthlyLeaves": {"1": [{"name": "បួ ខែម", "gender": "ប្រុស", "position": "នាយករងវិទ្យាស្ថាន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [22, 23], "status": "Approved"}, {"name": "បួ សុកខន", "gender": "ស្រី", "position": "អនុប្រ.ការិយាល័យ", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [19, 20, 21], "status": "Approved"}, {"name": "ជ លីនដា", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [8, 9], "status": "Approved"}, {"name": "ហេង ហួតចេង", "gender": "ប្រុស", "position": "អនុប្រ.ការិយាល័យ", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [16], "status": "Approved"}, {"name": "ឈួន សំរិត", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [14], "status": "Approved"}, {"name": "ស្រៀន ឡៃគីម", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [16, 22], "status": "Approved"}, {"name": "ស៊ុន ណៃស៊ាង", "gender": "ស្រី", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [27], "status": "Approved"}, {"name": "ហៃ វឿន", "gender": "ប្រុស", "position": "អ្នក​ធ្វើអនាម័យ​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 1, "days": [23], "status": "Approved"}], "2": [{"name": "សំបូរ ចន្នី", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [16, 17, 29], "status": "Approved"}, {"name": "វង នឿន", "gender": "ប្រុស", "position": "អ្នក​រក្សាសន្តិសុខ​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 2, "days": [19, 29], "status": "Approved"}], "3": [{"name": "បួ ខែម", "gender": "ប្រុស", "position": "នាយករងវិទ្យាស្ថាន", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [23], "status": "Approved"}, {"name": "កែវ ពុទ្ធរិន", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [5, 6, 9], "status": "Approved"}, {"name": "ឈួន សំរិត", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [24, 25], "status": "Approved"}, {"name": "អ៊ុក ប៊ុនហ័រ", "gender": "ប្រុស", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [13], "status": "Approved"}, {"name": "អ៊ុន សាឃន", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [16, 17], "status": "Approved"}, {"name": "ម៉ម សំឡី", "gender": "ប្រុស", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [11, 12, 13, 19], "status": "Approved"}, {"name": "ឆេង សុច័ន្ទណែត", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [27], "status": "Approved"}, {"name": "ផាវ ចន្នី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [2, 24, 25], "status": "Approved"}, {"name": "សេក លីនី", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [23, 24, 25], "status": "Approved"}, {"name": "អ៊ាវ ចិន្តា", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [24, 25], "status": "Approved"}, {"name": "លឹម សុខាណា", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [23, 24, 25], "status": "Approved"}, {"name": "ខេង ពីន", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [3, 4, 5], "status": "Approved"}, {"name": "សុក សៅវី", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [10, 11], "status": "Approved"}], "4": [{"name": "ជា យិននាង", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [2, 3, 31], "status": "Approved"}, {"name": "សាន់ សាវុឌ្ឍ", "gender": "ប្រុស", "position": "អនុប្រ.ការិយាល័យ", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [3, 31], "status": "Approved"}, {"name": "ជ លីនដា", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 5, "days": [3, 22, 23, 24, 31], "status": "Approved"}, {"name": "ផាវ ចន្នី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [22, 23, 31], "status": "Approved"}, {"name": "ម៉ុន ឆេងមាន", "gender": "ប្រុស", "position": "ប្រ.ដេប៉ាតឺម៉ង់", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [6, 31], "status": "Approved"}, {"name": "សំ អានរ៉ា", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [20, 31], "status": "Approved"}, {"name": "ហៃ វឿន", "gender": "ប្រុស", "position": "អ្នក​ធ្វើអនាម័យ​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 2, "days": [22, 31], "status": "Approved"}, {"name": "តូច ផា", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [17, 20, 21, 31], "status": "Approved"}], "5": [{"name": "បួ ខែម", "gender": "ប្រុស", "position": "នាយករងវិទ្យាស្ថាន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [27, 28], "status": "Approved"}, {"name": "កែវ ពុទ្ធរិន", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [28, 29], "status": "Approved"}, {"name": "ឈួន សំរិត", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [12, 13], "status": "Approved"}, {"name": "កន យុគី", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [13], "status": "Approved"}, {"name": "សុខ ស្រីលីន", "gender": "ស្រី", "position": "អ្នកថែសួន​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 1, "days": [19], "status": "Approved"}], "6": [{"name": "ជា យិននាង", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 5, "days": [10, 11, 12, 26, 31], "status": "Approved"}, {"name": "ជ លីនដា", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [22, 31], "status": "Approved"}, {"name": "សំបូរ ចន្នី", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [1, 31], "status": "Approved"}, {"name": "រិន រ៉ី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [22, 23, 31], "status": "Approved"}, {"name": "អាត សុភ័ណ្ឌ", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [30, 31], "status": "Approved"}, {"name": "ឆេង សុច័ន្ទណែត", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [12, 31], "status": "Approved"}, {"name": "ផាវ ចន្នី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [2, 31], "status": "Approved"}, {"name": "សេក លីនី", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [15, 16, 17, 31], "status": "Approved"}, {"name": "អ៊ាវ ចិន្តា", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [29, 30, 31], "status": "Approved"}, {"name": "ខេង ពីន", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [15, 16, 17, 31], "status": "Approved"}], "7": [{"name": "តាំង លាក់ឃាំង", "gender": "ប្រុស", "position": "នាយករងវិទ្យាស្ថាន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [29, 30, 31], "status": "Approved"}, {"name": "ជ លីនដា", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [24], "status": "Approved"}, {"name": "កែវ ពុទ្ធរិន", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [14, 15, 16], "status": "Approved"}, {"name": "ឈួន សំរិត", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [1], "status": "Approved"}, {"name": "រិន រ៉ី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [2, 3], "status": "Approved"}, {"name": "អ៊ា ចិត្រា", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [10], "status": "Approved"}, {"name": "សួ វណ្ណៈ", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [27, 28, 29], "status": "Approved"}, {"name": "នួន ឌីណា", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [13, 14], "status": "Approved"}, {"name": "ស្រៀន ឡៃគីម", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [22, 23, 24], "status": "Approved"}, {"name": "អាត សុភ័ណ្ឌ", "gender": "ស្រី", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [1, 2], "status": "Approved"}, {"name": "ឆេង សុច័ន្ទណែត", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [21], "status": "Approved"}, {"name": "សុក សៅវី", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 1, "days": [8], "status": "Approved"}, {"name": "សុខ ស្រីលីន", "gender": "ស្រី", "position": "អ្នកថែសួន​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 1, "days": [3], "status": "Approved"}, {"name": "ឡេង លឿន", "gender": "ប្រុស", "position": "អ្នកថែសួន​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 1, "days": [10], "status": "Approved"}], "8": [{"name": "ឈន ផល្លី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [20, 21], "status": "Approved"}, {"name": "តូច ផា", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [7, 11], "status": "Approved"}], "9": [{"name": "ជ លីនដា", "gender": "ស្រី", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [14, 15, 16, 31], "status": "Approved"}, {"name": "កែវ ពុទ្ធរិន", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [21, 22, 23, 31], "status": "Approved"}, {"name": "លាង លីណា", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [14, 31], "status": "Approved"}, {"name": "ឆេង សុច័ន្ទណែត", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [1, 31], "status": "Approved"}, {"name": "ផាវ ចន្នី", "gender": "ប្រុស", "position": "គ្រូបង្រៀន", "empType": "មន្ត្រីរាជការ", "daysCount": 4, "days": [7, 8, 9, 31], "status": "Approved"}, {"name": "ស៊ុន ណៃស៊ាង", "gender": "ស្រី", "position": "អនុប្រ.ដេប៉ាតឺម៉ង់", "empType": "មន្ត្រីរាជការ", "daysCount": 3, "days": [14, 15, 31], "status": "Approved"}, {"name": "សំ អានរ៉ា", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [15, 31], "status": "Approved"}, {"name": "ហៃ វឿន", "gender": "ប្រុស", "position": "អ្នក​ធ្វើអនាម័យ​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 4, "days": [14, 15, 16, 31], "status": "Approved"}, {"name": "តូច ផា", "gender": "ប្រុស", "position": "មន្ត្រី", "empType": "មន្ត្រីរាជការ", "daysCount": 2, "days": [15, 31], "status": "Approved"}, {"name": "ឡេង លឿន", "gender": "ប្រុស", "position": "អ្នកថែសួន​", "empType": "មន្ត្រីជាប់កិច្ចសន្យា", "daysCount": 2, "days": [2, 31], "status": "Approved"}], "10": [], "11": [], "12": []}};
+    
+    // State
+    let staffData = JSON.parse(localStorage.getItem('ksit_staff')) || rawData.staff;
+    let monthlyLeaves = JSON.parse(localStorage.getItem('ksit_leaves')) || rawData.monthlyLeaves;
+    let currentMonth = 7; // default July
+
+    // Switch Tabs
+    function switchTab(tabId) {
+      const tabs = ['annual', 'monthly', 'generator', 'staff'];
+      tabs.forEach(t => {
+        document.getElementById('view-' + t).classList.add('hidden');
+        const btn = document.getElementById('tab-btn-' + t);
+        if (btn) {
+          btn.classList.remove('bg-blue-700', 'text-white');
+          btn.classList.add('text-slate-300');
+        }
+      });
+
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-blue-700', 'text-white');
+        activeBtn.classList.remove('text-slate-300');
+      }
+
+      if (tabId === 'annual') renderAnnualChart();
+      if (tabId === 'monthly') loadMonthData(currentMonth);
+      if (tabId === 'generator') generateOfficialReport();
+      if (tabId === 'staff') renderMasterStaffTable();
+    }
+
+    // Render Annual Chart
+    let chartInstance = null;
+    function renderAnnualChart() {
+      const ctx = document.getElementById('leaveTrendsChart').getContext('2d');
+      const months = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ'];
+      
+      const civilDays = [13, 3, 26, 11, 8, 19, 21, 2, 14, 0, 0, 0];
+      const contractDays = [0, 0, 0, 4, 0, 0, 4, 2, 5, 0, 0, 0];
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'មន្ត្រីរាជការ',
+              data: civilDays,
+              backgroundColor: '#4f46e5',
+              borderRadius: 4
+            },
+            {
+              label: 'មន្ត្រីជាប់កិច្ចសន្យា',
+              data: contractDays,
+              backgroundColor: '#10b981',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, beginAtZero: true, grid: { color: '#f1f5f9' } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // Load Month Data for Tab 2
+    function loadMonthData(monthNum) {
+      currentMonth = parseInt(monthNum);
+      document.getElementById('monthSelect').value = currentMonth;
+      
+      const monthNames = {
+        1: 'មករា', 2: 'កុម្ភៈ', 3: 'មីនា', 4: 'មេសា', 5: 'ឧសភា', 6: 'មិថុនា',
+        7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា', 10: 'តុលា', 11: 'វិច្ឆិកា', 12: 'ធ្នូ'
+      };
+
+      const activeLeaves = monthlyLeaves[currentMonth] || [];
+      const civilLeaves = activeLeaves.filter(l => l.empType === 'មន្ត្រីរាជការ');
+      const contractLeaves = activeLeaves.filter(l => l.empType === 'មន្ត្រីជាប់កិច្ចសន្យា');
+
+      // Update Badges & Metrics
+      document.getElementById('metric-total-leave').textContent = `${activeLeaves.length} នាក់`;
+      document.getElementById('badge-count-civil').textContent = `${civilLeaves.length} នាក់`;
+      document.getElementById('badge-count-contract').textContent = `${contractLeaves.length} នាក់`;
+      document.getElementById('badge-active-period').textContent = `Active Period: ${monthNames[currentMonth]} 2026`;
+      
+      const nextMonthName = monthNames[currentMonth === 12 ? 1 : currentMonth + 1];
+      const signText = `ខេត្តកំពង់ស្ពឺ ថ្ងៃទី១ ខែ${nextMonthName} ឆ្នាំ២០២៦ | បានឃើញ និងឯកភាព: នាយកវិទ្យាស្ថាន`;
+      document.getElementById('summary-date').innerHTML = signText;
+      document.getElementById('detail-sign-block').innerHTML = signText;
+
+      // Populate Summary Table (Sheet '04')
+      const civilFemaleLeave = civilLeaves.filter(l => l.gender === 'ស្រី').length;
+      const contractFemaleLeave = contractLeaves.filter(l => l.gender === 'ស្រី').length;
+
+      const summaryHtml = `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="border border-slate-300 py-3 font-bold">1</td>
+          <td class="border border-slate-300 py-3 px-3 text-left font-bold text-slate-900">
+            វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ (KSIT)
+          </td>
+          <td class="border border-slate-300 font-bold">51</td>
+          <td class="border border-slate-300">16</td>
+          <td class="border border-slate-300 font-bold text-indigo-700">${civilLeaves.length}</td>
+          <td class="border border-slate-300 text-indigo-700">${civilFemaleLeave}</td>
+          <td class="border border-slate-300 text-slate-400">0</td>
+          <td class="border border-slate-300 text-slate-400">0</td>
+          <td class="border border-slate-300 font-bold">11</td>
+          <td class="border border-slate-300">3</td>
+          <td class="border border-slate-300 font-bold text-emerald-700">${contractLeaves.length}</td>
+          <td class="border border-slate-300 text-emerald-700">${contractFemaleLeave}</td>
+          <td class="border border-slate-300 text-slate-400">0</td>
+          <td class="border border-slate-300 text-slate-400">0</td>
+          <td class="border border-slate-300 text-slate-400">-</td>
+        </tr>
+      `;
+      document.getElementById('summary-table-body').innerHTML = summaryHtml;
+
+      // Populate Detail Table (Sheet 'Detail (10)') - Part A
+      let civilHtml = '';
+      civilLeaves.forEach((item, idx) => {
+        const genderBadge = item.gender === 'ស្រី' 
+          ? '<span class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 font-medium">ស្រី (Female)</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">ប្រុស (Male)</span>';
+        
+        let posBadge = item.position;
+        if (item.position === 'គ្រូបង្រៀន') {
+          posBadge = '<span class="font-bold text-emerald-700">Teacher (គ្រូបង្រៀន)</span>';
+        } else if (item.position.includes('នាយករង')) {
+          posBadge = '<span class="font-bold text-blue-700">Deputy Director (នាយករង)</span>';
+        } else if (item.position.includes('ប្រ.')) {
+          posBadge = '<span class="font-bold text-purple-700">Dept. Head (' + item.position + ')</span>';
+        } else if (item.position === 'មន្ត្រី') {
+          posBadge = '<span class="text-slate-700">Officer (មន្ត្រី)</span>';
+        }
+
+        civilHtml += `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-2.5 px-3 text-center font-bold text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${item.name}</td>
+            <td class="py-2.5 px-3">${genderBadge}</td>
+            <td class="py-2.5 px-3">${posBadge}</td>
+            <td class="py-2.5 px-3 text-center font-bold text-blue-700">${item.daysCount} days</td>
+            <td class="py-2.5 px-3 text-center text-slate-400">0</td>
+            <td class="py-2.5 px-3 text-center text-slate-400">-</td>
+            <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Approved</span></td>
+            <td class="py-2.5 px-3 text-center no-print">
+              <button onclick="editLeave('${item.name}')" class="text-blue-600 hover:text-blue-800 p-1 mr-1" title="កែសម្រួល">✏️</button>
+              <button onclick="deleteLeave('${item.name}')" class="text-rose-600 hover:text-rose-800 p-1" title="លុប">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+      if (civilLeaves.length === 0) {
+        civilHtml = '<tr><td colspan="9" class="py-4 text-center text-slate-400">គ្មានមន្ត្រីរាជការសុំច្បាប់ក្នុងខែនេះទេ</td></tr>';
+      }
+      document.getElementById('civil-leave-body').innerHTML = civilHtml;
+
+      // Populate Detail Table - Part B (Contract Staff)
+      let contractHtml = '';
+      contractLeaves.forEach((item, idx) => {
+        const genderBadge = item.gender === 'ស្រី' 
+          ? '<span class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 font-medium">ស្រី (Female)</span>'
+          : '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">ប្រុស (Male)</span>';
+
+        contractHtml += `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-2.5 px-3 text-center font-bold text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${item.name}</td>
+            <td class="py-2.5 px-3">${genderBadge}</td>
+            <td class="py-2.5 px-3 text-slate-700">${item.position}</td>
+            <td class="py-2.5 px-3 text-center font-bold text-emerald-700">${item.daysCount} days</td>
+            <td class="py-2.5 px-3 text-center text-slate-400">0</td>
+            <td class="py-2.5 px-3 text-center text-slate-400">-</td>
+            <td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">Approved</span></td>
+            <td class="py-2.5 px-3 text-center no-print">
+              <button onclick="editLeave('${item.name}')" class="text-blue-600 hover:text-blue-800 p-1 mr-1">✏️</button>
+              <button onclick="deleteLeave('${item.name}')" class="text-rose-600 hover:text-rose-800 p-1">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+      if (contractLeaves.length === 0) {
+        contractHtml = '<tr><td colspan="9" class="py-4 text-center text-slate-400">គ្មានមន្ត្រីកិច្ចសន្យាសុំច្បាប់ក្នុងខែនេះទេ</td></tr>';
+      }
+      document.getElementById('contract-leave-body').innerHTML = contractHtml;
+    }
+
+    // Render Master Staff Directory
+    function renderMasterStaffTable(filtered = null) {
+      const list = filtered || staffData;
+      let html = '';
+      list.forEach((s, idx) => {
+        const isTeacher = s.position === 'គ្រូបង្រៀន';
+        const isDepDirector = s.position.includes('នាយករង');
+        const isDirector = s.position.includes('នាយកវិទ្យាស្ថាន');
+        
+        let posClass = 'text-slate-700';
+        if (isTeacher) posClass = 'text-emerald-700 font-bold';
+        if (isDepDirector || isDirector) posClass = 'text-blue-700 font-bold';
+
+        html += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2 px-3 text-center font-semibold text-slate-500">${s.no}</td>
+            <td class="py-2 px-3 font-mono text-[11px] text-slate-500">${s.id}</td>
+            <td class="py-2 px-3 font-bold text-slate-900">${s.name}</td>
+            <td class="py-2 px-3 text-slate-500">${s.latin}</td>
+            <td class="py-2 px-3 text-center">${s.gender}</td>
+            <td class="py-2 px-3 text-slate-600">${s.rank || '-'}</td>
+            <td class="py-2 px-3 text-slate-500">${s.empType}</td>
+            <td class="py-2 px-3 bg-indigo-50/50 ${posClass}">${s.position}</td>
+            <td class="py-2 px-3 font-mono text-slate-500 text-[11px]">${s.phone || '-'}</td>
+          </tr>
+        `;
+      });
+      document.getElementById('masterStaffTableBody').innerHTML = html;
+    }
+
+    // Filter Staff
+    function filterStaffTable() {
+      const query = document.getElementById('staffSearchInput').value.toLowerCase();
+      const roleFilter = document.getElementById('staffRoleFilter').value;
+
+      const filtered = staffData.filter(s => {
+        const matchesQuery = s.name.toLowerCase().includes(query) || s.latin.toLowerCase().includes(query) || s.id.includes(query);
+        let matchesRole = true;
+        if (roleFilter === 'គ្រូបង្រៀន') matchesRole = s.position === 'គ្រូបង្រៀន';
+        else if (roleFilter === 'នាយករង') matchesRole = s.position.includes('នាយករង');
+        else if (roleFilter === 'អនុប្រ') matchesRole = s.position.includes('អនុប្រ');
+        else if (roleFilter === 'ប្រ.') matchesRole = s.position.includes('ប្រ.ដេប៉ាតឺម៉ង់');
+        else if (roleFilter === 'មន្ត្រី') matchesRole = s.position === 'មន្ត្រី';
+        else if (roleFilter === 'កិច្ចសន្យា') matchesRole = s.empType === 'មន្ត្រីជាប់កិច្ចសន្យា';
+
+        return matchesQuery && matchesRole;
+      });
+      renderMasterStaffTable(filtered);
+    }
+
+    // Official Report Generator (Like /ksit-monthly-attendance-report)
+    function generateOfficialReport() {
+      const selMonth = parseInt(document.getElementById('genMonthSelect').value);
+      const repType = document.getElementById('genReportType').value;
+      const monthNames = { 7: 'កក្កដា', 8: 'សីហា', 9: 'កញ្ញា' };
+      const mName = monthNames[selMonth] || 'សីហា';
+
+      let output = `
+        <div class="bg-white p-8 rounded-lg shadow-sm border border-slate-300 max-w-5xl mx-auto space-y-6 text-slate-900 font-khmer">
+          
+          <!-- Royal & Ministry Header -->
+          <div class="flex justify-between items-start border-b border-slate-200 pb-4 text-xs font-semibold">
+            <div class="text-center">
+              <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+              <div class="font-bold text-slate-900">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold">ព្រះរាជាណាចក្រកម្ពុជា</div>
+              <div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+            </div>
+          </div>
+
+          <!-- Report Title -->
+          <div class="text-center space-y-1">
+            <h2 class="text-base font-bold text-slate-900">តារាង២. សម្រង់ព័ត៌មានស្ដីពី ស្ថានភាពមន្រ្តីរាជការស៊ីវិល និងមន្រ្តីជាប់កិច្ចសន្យា</h2>
+            <p class="text-xs font-medium text-slate-600">ប្រចាំខែ${mName} ឆ្នាំ២០២៦ (រៀបចំតាមទម្រង់ Landscape ផ្លូវការ)</p>
+          </div>
+
+          <!-- Table 2 Landscape Sample Preview -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-[11px] border border-black text-center border-collapse">
+              <thead>
+                <tr class="bg-slate-100 font-bold">
+                  <th rowspan="2" class="border border-black p-1 w-8">ល.រ</th>
+                  <th rowspan="2" class="border border-black p-1 text-left w-48">អង្គភាព</th>
+                  <th colspan="2" class="border border-black p-1">មន្ត្រីរាជការស៊ីវិល</th>
+                  <th colspan="2" class="border border-black p-1">មន្ត្រីជាប់កិច្ចសន្យា</th>
+                  <th colspan="2" class="border border-black p-1">អវត្តមានប្រចាំខែ</th>
+                  <th colspan="2" class="border border-black p-1">ទំនេរគ្មានបៀវត្ស</th>
+                  <th colspan="2" class="border border-black p-1">ក្រៅក្របខណ្ឌដើម</th>
+                  <th rowspan="2" class="border border-black p-1 w-12">ផ្សេងៗ</th>
+                </tr>
+                <tr class="bg-slate-50 font-semibold text-[10px]">
+                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
+                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
+                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">អត់ច្បាប់</th>
+                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
+                  <th class="border border-black p-1">សរុប</th><th class="border border-black p-1">ស្រី</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="font-bold bg-slate-50/50">
+                  <td class="border border-black p-1">២.១</td><td class="border border-black p-1 text-left">គណៈគ្រប់គ្រងវិទ្យាស្ថាន</td>
+                  <td class="border border-black p-1">5</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td>
+                </tr>
+                <tr>
+                  <td class="border border-black p-1">២.១.១</td><td class="border border-black p-1 text-left">នាយកវិទ្យាស្ថាន</td>
+                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td>
+                </tr>
+                <tr>
+                  <td class="border border-black p-1">២.១.២</td><td class="border border-black p-1 text-left">នាយករងវិទ្យាស្ថាន (រួមមាន លោក បួ ខែម)</td>
+                  <td class="border border-black p-1">4</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1">0</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td>
+                </tr>
+                <tr class="font-bold bg-slate-50/50">
+                  <td class="border border-black p-1">៣.១</td><td class="border border-black p-1 text-left">ការិយាល័យរដ្ឋបាល និងបុគ្គលិក</td>
+                  <td class="border border-black p-1">2</td><td class="border border-black p-1">1</td>
+                  <td class="border border-black p-1">11</td><td class="border border-black p-1">3</td>
+                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td>
+                </tr>
+                <tr class="font-bold bg-slate-100">
+                  <td class="border border-black p-1">សរុប</td><td class="border border-black p-1 text-left">វិទ្យាស្ថានបច្ចេកវិទ្យាកំពង់ស្ពឺ</td>
+                  <td class="border border-black p-1">51</td><td class="border border-black p-1">16</td>
+                  <td class="border border-black p-1">11</td><td class="border border-black p-1">3</td>
+                  <td class="border border-black p-1">2</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1">1</td><td class="border border-black p-1">0</td>
+                  <td class="border border-black p-1"></td><td class="border border-black p-1"></td>
+                  <td class="border border-black p-1"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Notes Block -->
+          <div class="text-[11px] text-slate-600 space-y-1">
+            <p><strong>សេចក្តីបញ្ជាក់៖</strong></p>
+            <p>- លេខរៀងចាប់ផ្តើមដោយលេខ២៖ សំដៅដល់កម្រិតនាយកដ្ឋាន / វិទ្យាស្ថាន។</p>
+            <p>- លេខរៀងចាប់ផ្តើមដោយលេខ៣៖ សំដៅដល់កម្រិតការិយាល័យ និងដេប៉ាតឺម៉ង់។</p>
+            <p>- ទំនេរគ្មានបៀវត្សសរុបត្រឹម ១ នាក់ (លោក ម៉ៅ សារ៉ារិទ្ធ) ដោយសារលោក ស៊ុំ ស៊ីណាត បានវិលត្រឡប់ចូលបម្រើការងារវិញ (សកម្ម)។</p>
+          </div>
+
+          <!-- Official Signatures -->
+          <div class="flex justify-between pt-6 text-xs text-center">
+            <div></div>
+            <div class="space-y-12">
+              <div>
+                <div>ខេត្តកំពង់ស្ពឺ ថ្ងៃទី១ ខែកញ្ញា ឆ្នាំ២០២៦</div>
+                <div class="font-bold mt-1">អ្នកធ្វើរបាយការណ៍</div>
+              </div>
+              <div>
+                <div class="font-bold">បានឃើញ និងឯកភាព</div>
+                <div class="font-bold">នាយកវិទ្យាស្ថាន</div>
+                <div class="font-bold mt-8">ជា យិននាង</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      `;
+      document.getElementById('report-output-container').innerHTML = output;
+    }
+
+    // Add / Edit Modal Controls
+    function openAddLeaveModal() {
+      const select = document.getElementById('modalStaffSelect');
+      select.innerHTML = '';
+      staffData.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = `${s.name} (${s.position}) - ${s.empType}`;
+        select.appendChild(opt);
+      });
+      onModalStaffChange();
+      document.getElementById('leaveModal').classList.remove('hidden');
+    }
+
+    function onModalStaffChange() {
+      const sName = document.getElementById('modalStaffSelect').value;
+      const s = staffData.find(st => st.name === sName);
+      if (s) {
+        document.getElementById('modalStaffPosition').value = s.position;
+      }
+    }
+
+    function closeLeaveModal() {
+      document.getElementById('leaveModal').classList.add('hidden');
+    }
+
+    function saveModalLeave() {
+      const sName = document.getElementById('modalStaffSelect').value;
+      const s = staffData.find(st => st.name === sName);
+      const days = parseInt(document.getElementById('modalLeaveDays').value) || 1;
+
+      if (!s) return;
+
+      const currentList = monthlyLeaves[currentMonth] || [];
+      const existingIdx = currentList.findIndex(l => l.name === sName);
+
+      if (existingIdx >= 0) {
+        currentList[existingIdx].daysCount = days;
+        currentList[existingIdx].position = s.position;
+      } else {
+        currentList.push({
+          name: s.name,
+          gender: s.gender,
+          position: s.position,
+          empType: s.empType,
+          daysCount: days,
+          days: [1],
+          status: 'Approved'
+        });
+      }
+
+      monthlyLeaves[currentMonth] = currentList;
+      localStorage.setItem('ksit_leaves', JSON.stringify(monthlyLeaves));
+
+      closeLeaveModal();
+      loadMonthData(currentMonth);
+      alert('បានកត់ត្រាច្បាប់ដោយជោគជ័យ!');
+    }
+
+    function editLeave(staffName) {
+      openAddLeaveModal();
+      document.getElementById('modalStaffSelect').value = staffName;
+      onModalStaffChange();
+    }
+
+    function deleteLeave(staffName) {
+      if (!confirm(`តើលោកគ្រូពិតជាចង់លុបច្បាប់របស់ ${staffName} មែនទេ?`)) return;
+      monthlyLeaves[currentMonth] = (monthlyLeaves[currentMonth] || []).filter(l => l.name !== staffName);
+      localStorage.setItem('ksit_leaves', JSON.stringify(monthlyLeaves));
+      loadMonthData(currentMonth);
+    }
+
+    // Initial Execution
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAnnualChart();
+      loadMonthData(currentMonth);
+      renderMasterStaffTable();
+    });
+  </script>
+</body>
+</html>

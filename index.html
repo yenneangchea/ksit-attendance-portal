@@ -12,8 +12,8 @@
       theme: {
         extend: {
           fontFamily: {
-            khmer: ['Segoe UI', 'Tahoma', 'sans-serif'],
-            moul: ['Segoe UI', 'Tahoma', 'sans-serif']
+            khmer: ['Kantumruy Pro', 'Hanuman', 'Siemreap', 'Noto Sans Khmer', 'Segoe UI', 'sans-serif'],
+            moul: ['Kantumruy Pro', 'Hanuman', 'Siemreap', 'Noto Sans Khmer', 'sans-serif']
           },
           colors: {
             ksit: {
@@ -30,6 +30,8 @@
     }
   </script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&family=Siemreap&family=Hanuman:wght@400;700&display=swap');
+
     :root {
       --bg: #f3f6fb;
       --panel: #ffffff;
@@ -42,6 +44,7 @@
       --success: #10b981;
       --warning: #f59e0b;
       --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      --khmer-font: 'Kantumruy Pro', 'Hanuman', 'Siemreap', 'Noto Sans Khmer', 'Segoe UI', Tahoma, sans-serif;
     }
 
     * { box-sizing: border-box; }
@@ -49,9 +52,15 @@
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: var(--khmer-font);
+      font-size: 15px;
+      line-height: 1.6;
       background: linear-gradient(180deg, #f5f7fb 0%, #eef2f8 100%);
       color: var(--ink);
+    }
+
+    body, button, input, select, textarea, table {
+      font-family: var(--khmer-font);
     }
 
     .hero-panel {
@@ -64,9 +73,27 @@
       letter-spacing: 0.02em;
     }
 
+    #report-output-container,
+    #report-output-container * {
+      font-family: var(--khmer-font);
+    }
+
+    #report-output-container table {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
     @media (max-width: 640px) {
+      body {
+        font-size: 14px;
+      }
+
       .mobile-compact {
         font-size: 0.72rem;
+      }
+
+      #report-output-container table {
+        font-size: 11px;
       }
     }
 

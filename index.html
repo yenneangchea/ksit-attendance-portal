@@ -625,6 +625,29 @@
           <label class="block font-medium text-slate-700 mb-1">មុខតំណែងផ្លូវការ (Auto-filled from Column K):</label>
           <input type="text" id="modalStaffPosition" readonly class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-slate-600 font-semibold">
         </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ខែច្បាប់:</label>
+            <select id="modalLeaveMonth" class="w-full border border-slate-300 rounded-lg p-2 bg-white">
+              <option value="1">មករា</option>
+              <option value="2">កុម្ភៈ</option>
+              <option value="3">មីនា</option>
+              <option value="4">មេសា</option>
+              <option value="5">ឧសភា</option>
+              <option value="6">មិថុនា</option>
+              <option value="7">កក្កដា</option>
+              <option value="8">សីហា</option>
+              <option value="9">កញ្ញា</option>
+              <option value="10">តុលា</option>
+              <option value="11">វិច្ឆិកា</option>
+              <option value="12">ធ្នូ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ថ្ងៃច្បាប់:</label>
+            <input type="number" id="modalLeaveDay" min="1" max="31" value="1" class="w-full border border-slate-300 rounded-lg p-2">
+          </div>
+        </div>
         <div>
           <label class="block font-medium text-slate-700 mb-1">ចំនួនថ្ងៃច្បាប់ (Leave Days):</label>
           <input type="number" id="modalLeaveDays" min="1" max="31" value="1" class="w-full border border-slate-300 rounded-lg p-2">
@@ -668,9 +691,38 @@
       return value;
     }
 
+    function normalizeEmployeeType(empType, position, name) {
+      const type = String(empType || '').trim();
+      const title = String(position || '').trim();
+
+      if (type.includes('កិច្ចសន្យា') || type.includes('Contract')) return 'មន្ត្រីជាប់កិច្ចសន្យា';
+      if (title.includes('អ្នក') || title.includes('កិច្ចសន្យា')) return 'មន្ត្រីជាប់កិច្ចសន្យា';
+      if (type === 'មន្ត្រីរាជការ' || type.includes('Civil')) return 'មន្ត្រីរាជការ';
+      return type || 'មន្ត្រីរាជការ';
+    }
+
+    function normalizeEmployeeName(name) {
+      return String(name || '').normalize('NFC').replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+    }
+
     let staffData = JSON.parse(localStorage.getItem('ksit_staff')) || rawData.staff;
-staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: normalizeStaffRole(s.position) })) : rawData.staff;
+staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: normalizeStaffRole(s.position), empType: normalizeEmployeeType(s.empType, s.position, s.name) })) : rawData.staff;
     let monthlyLeaves = JSON.parse(localStorage.getItem('ksit_leaves')) || rawData.monthlyLeaves;
+    monthlyLeaves = monthlyLeaves && typeof monthlyLeaves === 'object'
+      ? Object.fromEntries(Object.entries(monthlyLeaves).map(([month, items]) => [
+          month,
+          Array.isArray(items)
+            ? items.map(item => {
+                const staff = staffData.find(person => normalizeEmployeeName(person.name) === normalizeEmployeeName(item.name));
+                return {
+                  ...item,
+                  empType: staff ? staff.empType : normalizeEmployeeType(item.empType, item.position, item.name),
+                  position: staff ? staff.position : normalizeStaffRole(item.position)
+                };
+              })
+            : []
+        ]))
+      : rawData.monthlyLeaves;
     let currentMonth = 7; // default July
 
     // Switch Tabs
@@ -1148,6 +1200,9 @@ staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: nor
         opt.textContent = `${s.name} (${s.position}) - ${s.empType}`;
         select.appendChild(opt);
       });
+      document.getElementById('modalLeaveMonth').value = currentMonth;
+      document.getElementById('modalLeaveDay').value = 1;
+      document.getElementById('modalLeaveDays').value = 1;
       onModalStaffChange();
       document.getElementById('leaveModal').classList.remove('hidden');
     }
@@ -1168,15 +1223,24 @@ staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: nor
       const sName = document.getElementById('modalStaffSelect').value;
       const s = staffData.find(st => st.name === sName);
       const days = parseInt(document.getElementById('modalLeaveDays').value) || 1;
+      const month = parseInt(document.getElementById('modalLeaveMonth').value);
+      const day = parseInt(document.getElementById('modalLeaveDay').value);
 
       if (!s) return;
+      const daysInMonth = new Date(2026, month, 0).getDate();
+      if (!Number.isInteger(day) || day < 1 || day > daysInMonth) {
+        alert(`សូមបញ្ចូលថ្ងៃចន្លោះពី 1 ដល់ ${daysInMonth}។`);
+        return;
+      }
 
-      const currentList = monthlyLeaves[currentMonth] || [];
-      const existingIdx = currentList.findIndex(l => l.name === sName);
+      const currentList = monthlyLeaves[month] || [];
+      const existingIdx = currentList.findIndex(l => normalizeEmployeeName(l.name) === normalizeEmployeeName(sName));
 
       if (existingIdx >= 0) {
         currentList[existingIdx].daysCount = days;
+        currentList[existingIdx].days = [day];
         currentList[existingIdx].position = s.position;
+        currentList[existingIdx].empType = s.empType;
       } else {
         currentList.push({
           name: s.name,
@@ -1184,23 +1248,29 @@ staffData = Array.isArray(staffData) ? staffData.map(s => ({ ...s, position: nor
           position: s.position,
           empType: s.empType,
           daysCount: days,
-          days: [1],
+          days: [day],
           status: 'Approved'
         });
       }
 
-      monthlyLeaves[currentMonth] = currentList;
+      monthlyLeaves[month] = currentList;
       localStorage.setItem('ksit_leaves', JSON.stringify(monthlyLeaves));
 
       closeLeaveModal();
-      loadMonthData(currentMonth);
+      loadMonthData(month);
       alert('បានកត់ត្រាច្បាប់ដោយជោគជ័យ!');
     }
 
     function editLeave(staffName) {
       openAddLeaveModal();
-      document.getElementById('modalStaffSelect').value = staffName;
+      const staff = staffData.find(person => normalizeEmployeeName(person.name) === normalizeEmployeeName(staffName));
+      const leave = (monthlyLeaves[currentMonth] || []).find(item => normalizeEmployeeName(item.name) === normalizeEmployeeName(staffName));
+      if (staff) document.getElementById('modalStaffSelect').value = staff.name;
       onModalStaffChange();
+      if (leave) {
+        document.getElementById('modalLeaveDay').value = leave.days?.[0] || 1;
+        document.getElementById('modalLeaveDays').value = leave.daysCount || 1;
+      }
     }
 
     function deleteLeave(staffName) {
